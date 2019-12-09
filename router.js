@@ -1,4 +1,4 @@
-module.exports = function(app, fs, path, getIP, axios, time, mysql, crypto, mysql_connection) {
+module.exports = function(app, fs, path, crypto, axios, dbConnection, getIp, async) {
 
 
     // Create
@@ -9,10 +9,6 @@ module.exports = function(app, fs, path, getIP, axios, time, mysql, crypto, mysq
 
 
     // Read
-
-    app.post("/admin", function(req, res) {
-         
-    })
 
 
 

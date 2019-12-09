@@ -14,9 +14,10 @@ const async = require('async');
 
 const app = express();
 
+
+const hash_code = "5648erjfw0mej1qcedhJ@#)$%F)HFM#DU@!FC";
+
 //server open
-const server = require('http').createServer(app);
-// const io = require('socket.io')(server);
 
 const port = 80;
 const ip_local = "localhost";
@@ -28,26 +29,47 @@ const ip_mysql_real = "175.116.45.41";
 const ip_mysql_local = "localhost";
 const ip_mysql = ip_mysql_real;
 
-// var mysql_connection = mysql.createConnection({
-//     host: ip_mysql,
-//     user: 'assertive_dimigo',
-//     password: 'smartfarm123',
-//     database: 'assertive'
-// });
-
-
-// var mysql_connection = mysql.createConnection({
-//     host: ip_mysql,
-//     user: 'foo',
-//     password: 'bar',
-//     database: 'assertive'
-// });
+const server = app.listen(port, ip, function() {
+    console.log(`
+        | KDMHS Smartfarm API |
+    
+        Started server in port: ` + port + `
+        Server Link: http://` + ip + `: ` + port + `
+    `);
+});
 
 
 
 
 
+const dbConnection = mysql.createConnection({
+    host: ip_mysql,
+    user: 'assertive_dimigo',
+    password: 'smartfarm123',
+    database: 'assertive'
+});
 
+function mysql_cmf(command) {
+    async.waterfall([
+        function(callback) {
+            dbConnection.connect();
+            callback(null);
+        },
+        function(callback) {
+            dbConnection.query(command, (err, rows, fields) => {
+                if (!err) {
+                    callback(null, { err, rows, fields });
+                } else {
+                    callback(null, "Error");
+                }
+            })
+        },
+        function(result, callback) {
+            dbConnection.end();
+            return result;
+        }
+    ])
+}
 
 
 
@@ -110,5 +132,5 @@ app.use(session({
 
 //router setting
 
-var router = require('./router')(app, fs, path, getIP, axios, time, mysql, crypto, mysql_connection);
+var router = require('./router')(app, fs, path, crypto, axios, dbConnection, getIp, async, hash_code);
 
