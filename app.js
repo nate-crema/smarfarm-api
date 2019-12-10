@@ -19,7 +19,7 @@ const hash_code = "5648erjfw0mej1qcedhJ@#)$%F)HFM#DU@!FC";
 
 //server open
 
-const port = 80;
+const port = 689;
 const ip_local = "localhost";
 const ip_outward = "1.242.22.109";
 const ip = ip_local;
@@ -132,5 +132,5 @@ app.use(session({
 
 //router setting
 
-var router = require('./router')(app, fs, path, crypto, axios, dbConnection, getIp, async, hash_code);
+var router = require('./router')(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code);
 
