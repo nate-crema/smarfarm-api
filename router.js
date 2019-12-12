@@ -23,57 +23,60 @@ module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async,
     // Create
 
     app.post('/user', function(req, res) {
+        console.log(req.body);
         const userid = req.body.userid;
         const pw = req.body.pw;
         const name = req.body.name;
         const email = req.body.email;
         const phone = req.body.phone;
         const birth = req.body.birth;
+        let enc_pw;
+        let salt_out;
+
 
         // exist check
 
-        async.waterfall([
-            function(callback) {
-                mysql_cmf("SELECT * FROM user WHERE userid LIKE '" + userid + "'")
-                .then((res_sql) => {
-                    // console.log(res_sql.length == []);
-                    if (res_sql.length != 0) {
-                        // exist id
-                        res.end("Already using userid: " + userid);
-                    } else {
-                        // pw encrypt
-                        var salt = "";
-                        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        mysql_cmf("SELECT * FROM user WHERE userid LIKE '" + userid + "'")
+        .then((res_sql) => {
+            // console.log(res_sql.length == []);
+            if (res_sql.length != 0) {
+                // exist id
+                res.end("Already using userid: " + userid);
+            } else {
+                // pw encrypt
+                var salt = "";
+                var possible = "0123456789";
 
-                        for( var i=0; i < 10; i++ )
-                            salt += possible.charAt(Math.floor(Math.random() * possible.length));
+                for( var i=0; i < 10; i++ )
+                    salt += possible.charAt(Math.floor(Math.random() * possible.length));
 
-                        console.log(salt);
-                        try {
-                            crypto.pbkdf2(pw, salt, 100000, 64, 'sha512', (err, res_enc) => {
-                                console.log(res_enc.toString('hex'));
-                                callback(null, res_enc.toString('hex'), salt);
-                            })
-                            .catch((e) => {
-                                console.log(e);
-                            })
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }
-                })
-                .catch(e => {
+                console.log(salt);
+
+                salt_out = salt;
+                
+                
+                try {
+                    crypto.pbkdf2(pw, salt, 100000, 64, 'sha512', (err, res_enc) => {
+                        console.log(res_enc.toString('hex'));
+                        enc_pw = res_enc.toString('hex');
+                        // res.end(res_enc.toString('hex'));
+                    })
+                } catch (e) {
                     console.error(e);
-                }) 
-            },
-            function(enc_pw, salt_pw, callback) {
-                mysql_cmf(`insert into user (userid, password, pwsalt, name, email, phone, birth) values (` + userid + `, ` + enc_pw + `, ` + salt_pw + `, ` + name + `, ` + email + `, ` + phone + `, ` + birth + `)`)
-                .then((res_sql) => {
-                    console.log(res_sql);
-                    res.end("complete");
-                })
+                }
             }
-        ])
+        })
+
+
+        mysql_cmf(`insert into user (userid, password, pwsalt, name, email, phone, birth) values (` + userid + `, ` + enc_pw + `, ` + salt_out + `, ` + name + `, ` + email + `, ` + phone + `, ` + birth + `)`)
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.end("complete");
+        })
+        .catch((e) => {
+            console.log("sfrdgtfh");
+            throw e;
+        })
     });
 
 

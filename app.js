@@ -61,11 +61,13 @@ function mysql_cmf(command) {
                     resolve(rows);
                 } else {
                     // dbConnection.end();
-                    reject("Error");
+                    // reject("Error");
+                    reject(err);
                 }
             })
         } catch(e) {
-            console.error(e);
+            console.log("EXCEPTION");
+            reject(e);
         }
     })
 }
