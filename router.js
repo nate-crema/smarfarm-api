@@ -1,21 +1,21 @@
-module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async) {
+module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async, time) {
 
 
-    function encrypt(pw) {
-        let enc_pw;
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    // function encrypt(pw) {
+    //     let enc_pw;
+    //     var text = "";
+    //     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-        for( var i=0; i < 10; i++ )
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
+    //     for( var i=0; i < 10; i++ )
+    //         text += possible.charAt(Math.floor(Math.random() * possible.length));
 
-        console.log(text);
-        crypto.pbkdf2(pw, text, 100000, 64, 'sha512', (err, res_enc) => {
-            // if (err) throw err;
-            enc_pw = res_enc.toString('hex');
-        });
-        return{res_pw: enc_pw, salt: text};
-    }
+    //     console.log(text);
+    //     crypto.pbkdf2(pw, text, 100000, 64, 'sha512', (err, res_enc) => {
+    //         // if (err) throw err;
+    //         enc_pw = res_enc.toString('hex');
+    //     });
+    //     return{res_pw: enc_pw, salt: text};
+    // }
 
 
 
@@ -78,6 +78,107 @@ module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async,
             throw e;
         })
     });
+
+
+    app.post('/product', function(req, res) {
+        console.log(req.body);
+        const name = req.body.name;
+        const kind = req.body.kind;
+        const price = req.body.price;
+        const regdate = req.body.regdate;
+        const barcode = req.body.url;
+        const getdate = time; 
+        let enc_pw;
+        let salt_out;
+
+
+        // exist check
+
+        mysql_cmf("SELECT * FROM product WHERE userid LIKE '" + name + "'")
+        .then((res_sql) => {
+            // console.log(res_sql.length == []);
+            if (res_sql.length != 0) {
+                // exist id
+                res.end("Already using product name: " + name);
+            } else {
+                mysql_cmf(`insert into product (name, kind, price, reg_date, barcode, url, getdate) values (` + name + `, ` + kind + `, ` + price + `, ` + regdate + `, ` + barcode + `, ` + url + `, ` + getdate + `)`)
+                .then((res_sql) => {
+                    console.log(res_sql);
+                    res.end("complete");
+                })
+                .catch((e) => {
+                    console.log("sfrdgtfh");
+                    throw e;
+                })
+            }
+        })
+    });
+
+    app.post('/payment_card', function(req, res) {
+        console.log(req.body);
+        const date = time.split("-")[0];
+        const ip = getIP(req).clientIp;
+        const ord_id = req.body.ord_id;
+        const paytype = req.body.paytype_c; // auth or non_auth
+        const company = req.body.company;
+        const card_num = req.body.card_num;
+        const card_epyY = req.body.card_epyY;
+        const card_epyM = req.body.card_epyM;
+        const card_cvc = req.body.card_cvc;
+        const card_name = req.body.card_name;
+        const owner_name = req.body.owner_name;
+        const owner_pn = req.body.owner_pn;
+        let enc_pw;
+        let salt_out;
+
+        let pay_yn;
+
+
+        // exist check
+
+        mysql_cmf("SELECT * FROM payment_card WHERE id LIKE '" + ord_id + "'")
+        .then((res_sql) => {
+            // console.log(res_sql.length == []);
+            if (res_sql.length != 0) {
+                // exist id
+                res.end("Already processed order number: " + ord_id);
+            } else {
+                if (paytype == "auth") {
+                    // 인증방식 결제 --> PG사 모듈과 연동
+
+                    // temporary response
+                    pay_yn = true;
+                } else if (paytype == "non_auth") {
+                    // 비인증방식 결제 --> 암호화 및 보안DB 연결, 결제요청
+
+                    // temporary response
+                    pay_yn = true;
+                }
+            }
+
+            setTimeout(() => {
+                if (pay_yn == true) {
+                    mysql_cmf(`insert into payment_card (date, ip, company, card_num, expiry_y, expiry_m, cvc, card_name, owner_name, owner_pn) values (` + date + `, ` + ip + `, ` + company + `, ` + card_num + `, ` + card_epyY + `, ` + card_epyM + `, ` + card_cvc + `, ` + card_name + `, ` + owner_name+ `, ` + owner_pn+ `)`)
+                    .then((res_sql) => {
+                        console.log(res_sql);
+                        res.end("complete");
+                    })
+                    .catch((e) => {
+                        console.log("sfrdgtfh");
+                        console.error(e);
+                        res.end("Error occured");
+                    })
+                } else {
+                    res.end("Error occured");
+                }
+            }, 2000);
+        })
+    });
+
+
+
+
+
 
 
     // Update

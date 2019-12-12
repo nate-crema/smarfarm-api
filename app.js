@@ -133,5 +133,5 @@ app.use(session({
 
 //router setting
 
-var router = require('./router')(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async);
+var router = require('./router')(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async, time);
 
