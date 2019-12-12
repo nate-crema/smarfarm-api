@@ -112,6 +112,116 @@ module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async,
         });
     });
 
+    app.get('/product', function(req, res) {
+        const sType = req.body.sType;
+
+        let sobj;
+        if (sType == "id") {
+            sobj = req.body.id;
+        } else if (sType == "name") {
+            sobj = req.body.name;
+        } else if (sType == "kind") {
+            sobj = req.body.kind;
+        } else if (sType == "price") {
+            sobj = req.body.price;
+        } else if (sType == "regdate") {
+            sobj = req.body.regdate;
+        } else if (sType == "barcode") {
+            sobj = req.body.barcode
+        } else if (sType == "url") {
+            sobj = req.body.url
+        }
+        
+        mysql_cmf("SELECT * FROM product WHERE " + sType + " LIKE '" + sobj + "'")
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.json(res_sql);
+        });
+    });
+
+    app.get('/review', function(req, res) {
+        const sType = req.body.sType;
+
+        let sobj;
+        if (sType == "id") {
+            sobj = req.body.id;
+        } else if (sType == "name") {
+            sobj = req.body.name;
+        } else if (sType == "ip") {
+            sobj = req.body.ip;
+        } else if (sType == "date") {
+            sobj = req.body.date;
+        } else if (sType == "contents") {
+            sobj = req.body.contents;
+        } else if (sType == "stars") {
+            sobj = req.body.stars
+        }
+        
+        mysql_cmf("SELECT * FROM review WHERE " + sType + " LIKE '" + sobj + "'")
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.json(res_sql);
+        });
+    });
+
+    app.get('/payment_total', function(req, res) {
+        const sType = req.body.sType;
+
+        let sobj;
+        if (sType == "_id") {
+            sobj = req.body._id;
+        } else if (sType == "date") {
+            sobj = req.body.date;
+        } else if (sType == "ip") {
+            sobj = req.body.ip;
+        } else if (sType == "id") {
+            sobj = req.body.id;
+        } else if (sType == "type") {
+            sobj = req.body.type;
+        } else if (sType == "panum") {
+            sobj = req.body.panum
+        }
+        
+        mysql_cmf("SELECT * FROM payment_total WHERE " + sType + " LIKE '" + sobj + "'")
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.json(res_sql);
+        });
+    });
+
+    app.get('/payment_card', function(req, res) {
+        const sType = req.body.sType;
+
+        let sobj;
+        if (sType == "_id") {
+            sobj = req.body._id;
+        } else if (sType == "date") {
+            sobj = req.body.date;
+        } else if (sType == "ip") {
+            sobj = req.body.ip;
+        } else if (sType == "company") {
+            sobj = req.body.company;
+        } else if (sType == "card_num") {
+            sobj = req.body.card_num;
+        } else if (sType == "card_name") {
+            sobj = req.body.card_name;
+        } else if (sType == "owner_name") {
+            sobj = req.body.owner_name;
+        } else if (sType == "owner_pn") {
+            sobj = req.body.owner_pn;
+        }
+        
+        mysql_cmf("SELECT * FROM payment_card WHERE " + sType + " LIKE '" + sobj + "'")
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.json(res_sql);
+        });
+    });
+
+    
+
+    
+
 
 
     // Delete
