@@ -48,27 +48,26 @@ const dbConnection = mysql.createConnection({
     password: 'smartfarm123',
     database: 'assertive'
 });
+dbConnection.connect();
 
 function mysql_cmf(command) {
-    async.waterfall([
-        function(callback) {
-            dbConnection.connect();
-            callback(null);
-        },
-        function(callback) {
+    return new Promise(function(resolve, reject) {
+        try {
             dbConnection.query(command, (err, rows, fields) => {
                 if (!err) {
-                    callback(null, { err, rows, fields });
+                    // console.log("commanded");
+                    // console.log(rows);
+                    // dbConnection.end();
+                    resolve(rows);
                 } else {
-                    callback(null, "Error");
+                    // dbConnection.end();
+                    reject("Error");
                 }
             })
-        },
-        function(result, callback) {
-            dbConnection.end();
-            return result;
+        } catch(e) {
+            console.error(e);
         }
-    ])
+    })
 }
 
 
@@ -132,5 +131,5 @@ app.use(session({
 
 //router setting
 
-var router = require('./router')(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code);
+var router = require('./router')(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async);
 

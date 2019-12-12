@@ -1,7 +1,80 @@
-module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code) {
+module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async, hash_code, async) {
+
+
+    function encrypt(pw) {
+        let enc_pw;
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 10; i++ )
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        console.log(text);
+        crypto.pbkdf2(pw, text, 100000, 64, 'sha512', (err, res_enc) => {
+            // if (err) throw err;
+            enc_pw = res_enc.toString('hex');
+        });
+        return{res_pw: enc_pw, salt: text};
+    }
+
+
 
 
     // Create
+
+    app.post('/user', function(req, res) {
+        const userid = req.body.userid;
+        const pw = req.body.pw;
+        const name = req.body.name;
+        const email = req.body.email;
+        const phone = req.body.phone;
+        const birth = req.body.birth;
+
+        // exist check
+
+        async.waterfall([
+            function(callback) {
+                mysql_cmf("SELECT * FROM user WHERE userid LIKE '" + userid + "'")
+                .then((res_sql) => {
+                    // console.log(res_sql.length == []);
+                    if (res_sql.length != 0) {
+                        // exist id
+                        res.end("Already using userid: " + userid);
+                    } else {
+                        // pw encrypt
+                        var salt = "";
+                        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+                        for( var i=0; i < 10; i++ )
+                            salt += possible.charAt(Math.floor(Math.random() * possible.length));
+
+                        console.log(salt);
+                        try {
+                            crypto.pbkdf2(pw, salt, 100000, 64, 'sha512', (err, res_enc) => {
+                                console.log(res_enc.toString('hex'));
+                                callback(null, res_enc.toString('hex'), salt);
+                            })
+                            .catch((e) => {
+                                console.log(e);
+                            })
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                }) 
+            },
+            function(enc_pw, salt_pw, callback) {
+                mysql_cmf(`insert into user (userid, password, pwsalt, name, email, phone, birth) values (` + userid + `, ` + enc_pw + `, ` + salt_pw + `, ` + name + `, ` + email + `, ` + phone + `, ` + birth + `)`)
+                .then((res_sql) => {
+                    console.log(res_sql);
+                    res.end("complete");
+                })
+            }
+        ])
+    });
 
 
     // Update
@@ -10,26 +83,31 @@ module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async,
 
     // Read
 
-    app.post('/user', function(req, res) {
-        const id = req.body.id;
+    app.get('/user', function(req, res) {
+        const sType = req.body.sType;
         const pw = req.body.pw;
+
+        let sobj;
+        if (sType == "id") {
+            sobj = req.body.id;
+        } else if (sType == "userid") {
+            sobj = req.body.userid;
+        } else if (sType == "name") {
+            sobj = req.body.name;
+        } else if (sType == "email") {
+            sobj = req.body.email;
+        } else if (sType == "unum") {
+            sobj = req.body.unum;
+        } else if (sType == "phone") {
+            sobj = req.body.phone
+        }
         
-        crypto.randomBytes(64, (err, buf) => {
-            crypto.pbkdf2(pw, buf.toString('base64'), 100000, 64, 'sha512', (err, key) => {
-                const pw_enc = key.toString('base64');
-                const salt= buf.toString('base64');
-                console.log("salt: " + buf.toString('base64'));
-                console.log("key: " + key.toString('base64')); // 'dWhPkH6c4X1Y71A/DrAHhML3DyKQdEkUOIaSmYCI7xZkD5bLZhPF0dOSs2YZA/Y4B8XNfWd3DHIqR5234RtHzw=='
-                
-                mysql_cmf("SELECT * FROM user WHERE pw LIKE '" + pw_enc + "'")
-                .then(function(res_sql) {
-                    console.log(res_sql);
-                    res.end(res_sql);
-                })
-            });
+        mysql_cmf("SELECT * FROM user WHERE " + sType + " LIKE '" + sobj + "'")
+        .then((res_sql) => {
+            console.log(res_sql);
+            res.json(res_sql);
         });
-        
-    })
+    });
 
 
 
