@@ -327,6 +327,60 @@ module.exports = function(app, fs, path, crypto, axios, mysql_cmf, getIP, async,
 
     // Delete
 
+    // /delcode: register delete code
+    app.post('/delcode', function(req, res) {
+        const type = req.body.type;
+        const id = req.body.id;
+        const route = req.body.route;
+
+        async.waterfall([
+            function(callback) {
+                if (type ==  "offline") {
+                    // long-term Delete Code
+                    callback(null, "long-term");
+                } else if (type == "online") {
+                    callback(null, "one-time");
+                } else {
+                    res.end("Invalid type option:" + type);
+                }
+            },
+            function(typename, callback) {
+                mysql_cmf("select group from user where userid = " + id)
+                .then((res_cmd) => {
+                    console.log(res_cmd);
+                    // res.end("true");
+                    const guser = res_cmd.group;
+                    if (guser == "admin" || guser == "manager" || guser == "club") {
+                        // confirm
+                        console.log(id + ": requested delete code by using group authority: " + guesr);
+                        callback(null, typename, true);
+                    } else {
+                        res.end("Error: Invalid user id: " + id);
+                    }
+                })      
+            },
+            function(typename, confyn, callback) {
+                if (typename == "long-term") {
+                    mysql_cmf("select Oreqlimit from delcode where userid = " + id)
+                    .then((res_limit) => {
+                        if (res_limit.Oreqlimit < 5) {
+                            mysql_cmf("update delcode set Oreqlimit=" + res_limit.Oreqlimit+1 + " where Oreqlimit = " + res_limit.Oreqlimit);
+                            callback(null, typename, confyn);
+                        } else {
+                            console.log("Invalid request: request limit exceed");
+                            res.end("Invalid request: request limit exceed");
+                        }
+                    })
+                } else {
+                    callback(null, typename, confyn);
+                }
+            },
+            function(typename, confyn, callback) {
+                
+            }
+        ])
+    })
+
 
 
 
